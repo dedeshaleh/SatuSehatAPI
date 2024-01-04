@@ -530,11 +530,73 @@ class BackApi extends MY_Controller
                 $dataCek = json_decode($response);
                 $dataArr = array('ValReturn' => $dataCek, 'access_token' => $dataAccess, 'Id' => $dataCek->id);
                 $this->db->query("UPDATE DB_Master_Fix.dbo.Line_of_service SET ID_Satu_sehat = '$dataCek->id' WHERE Poly_Type = '$KodeRuangan'");
+                $this->db->query("UPDATE EMR.SatuSehat.Log_Token SET Deskripsi = '$response' WHERE access_token = '$dataAccess'");
                 echo json_encode($dataArr);
             } else {
+                $cek = $this->GetLokasiUpdate($NoOrganisasi, $KodeRuangan);
+
+                if ($cek == 0) {
+                    echo "HTTP Error: $httpCode\n";
+                    echo "Response: $cek->Response\n";
+                    echo "Response: $response\n";
+                }else{
+                    echo json_encode($cek);
+                    $this->db->query("UPDATE DB_Master_Fix.dbo.Line_of_service SET ID_Satu_sehat = '$cek->id' WHERE Poly_Type = '$KodeRuangan'");
+                    $this->db->query("UPDATE EMR.SatuSehat.Log_Token SET Deskripsi = '$cek->Response' WHERE access_token = '$dataAccess'");
+                }
                 // Handle non-200 status code
-                echo "HTTP Error: $httpCode\n";
-                echo "Response: $response\n";
+                // echo "HTTP Error: $httpCode\n";
+                // echo "Response: $response\n";
+            }
+        }
+
+        curl_close($ch);
+
+    }
+
+    public function GetLokasiUpdate($OrgID, $KodeRuangan) 
+    {
+        date_default_timezone_set("Asia/Jakarta");
+        $dataToken = $this->GetToken("GET Lokasi");
+
+        $data = array(
+            "Param" => null,
+        );
+
+        $json = json_encode($data, JSON_PRETTY_PRINT);
+        $dataUrl = $dataToken['base_url'];
+        $dataAccess = $dataToken['ValReturn']->access_token;
+
+        $url = "$dataUrl/Location?identifier=http://sys-ids.kemkes.go.id/location/$OrgID|$KodeRuangan";
+        $ch = curl_init($url);
+
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "GET");
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $dataAccess
+        ));
+
+        $response = curl_exec($ch);
+
+        // Check for cURL errors
+        if (curl_errno($ch)) {
+            echo 'Error: ' . curl_error($ch);
+        } else {
+            // Check HTTP status code
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            if ($httpCode == 200) {
+                // Decode and handle the response
+                $dataCek = json_decode($response, true);
+                $dataArr = array('status' => 1, 'ValReturn' => $dataCek, 'access_token' => $dataAccess, 'id' => $dataCek['entry'][0]['resource']['id']);
+                // echo json_encode($dataArr);
+                return $dataArr;
+            } else {
+                // Handle non-200 status code
+                $dataArr = array('status' => 0, 'Response' => $response, 'access_token' => $dataAccess, 'id' => $dataCek['entry'][0]['resource']['id']);
+                return $dataArr;
+                // echo "HTTP Error: $httpCode\n";
+                // echo "Response: $response\n";
             }
         }
 
