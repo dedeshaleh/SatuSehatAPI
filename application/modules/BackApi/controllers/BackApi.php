@@ -245,8 +245,9 @@ class BackApi extends MY_Controller
                 // Decode and handle the response
                 $dataCek = json_decode($response);
                 $dataArr = array('ValReturn' => $dataCek, 'access_token' => $dataAccess);
-                $IdDokter = $dataCek['entry'][0]['resource']['id'];
-                $this->db->query("UPDATE DB_Master_Fix.dbo.Dokter SET ID_Satu_Sehat = '$IdDokter' WHERE No_KTP = '$NIK'");
+                // $IdDokter = $dataCek['entry'];
+                $IdCek = $dataCek->entry[0]->resource;
+                $this->db->query("UPDATE DB_Master_Fix.dbo.Dokter SET ID_Satu_Sehat = '$IdCek->id' WHERE No_KTP = '$NIK'");
                 echo json_encode($dataArr);
             } else {
                 // Handle non-200 status code
