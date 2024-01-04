@@ -713,6 +713,7 @@ class BackApi extends MY_Controller
                 // Decode and handle the response
                 $dataCek = json_decode($response);
                 $dataArr = array('ValReturn' => $dataCek, 'access_token' => $dataAccess);
+                $this->db->query("UPDATE EMR.SatuSehat.Log_Token SET Payload = '$data', Deskripsi = '$response' WHERE access_token = '$dataAccess'");
                 echo json_encode($dataArr);
             } else {
                 // Handle non-200 status code
@@ -842,6 +843,7 @@ class BackApi extends MY_Controller
                 // Decode and handle the response
                 $dataCek = json_decode($response);
                 $dataArr = array('ValReturn' => $dataCek, 'access_token' => $dataAccess);
+                $this->db->query("UPDATE EMR.SatuSehat.Log_Token SET Payload = '$data', Deskripsi = '$response' WHERE access_token = '$dataAccess'");
                 echo json_encode($dataArr);
             } else {
                 // Handle non-200 status code
@@ -948,6 +950,7 @@ class BackApi extends MY_Controller
                 // Decode and handle the response
                 $dataCek = json_decode($response);
                 $dataArr = array('ValReturn' => $dataCek, 'access_token' => $dataAccess);
+                $this->db->query("UPDATE EMR.SatuSehat.Log_Token SET Payload = '$data', Deskripsi = '$response' WHERE access_token = '$dataAccess'");
                 echo json_encode($dataArr);
             } else {
                 // Handle non-200 status code
@@ -1056,6 +1059,7 @@ class BackApi extends MY_Controller
                 // Decode and handle the response
                 $dataCek = json_decode($response);
                 $dataArr = array('ValReturn' => $dataCek, 'access_token' => $dataAccess);
+                $this->db->query("UPDATE EMR.SatuSehat.Log_Token SET Payload = '$data', Deskripsi = '$response' WHERE access_token = '$dataAccess'");
                 echo json_encode($dataArr);
             } else {
                 // Handle non-200 status code
@@ -1232,6 +1236,7 @@ class BackApi extends MY_Controller
             if ($httpCode == 201 || $httpCode == 200) {
                 // Decode and handle the response
                 $dataCek = json_decode($response);
+                $this->db->query("UPDATE EMR.SatuSehat.Log_Token SET Payload = '$data', Deskripsi = '$response' WHERE access_token = '$dataAccess'");
                 $dataArr = array('ValReturn' => $dataCek, 'access_token' => $dataAccess);
                 echo json_encode($dataArr);
             } else {
