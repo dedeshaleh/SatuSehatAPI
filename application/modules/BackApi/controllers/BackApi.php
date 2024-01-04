@@ -588,7 +588,7 @@ class BackApi extends MY_Controller
             if ($httpCode == 200) {
                 // Decode and handle the response
                 $dataCek = json_decode($response, true);
-                $dataArr = array('status' => 1, 'ValReturn' => $dataCek, 'access_token' => $dataAccess, 'id' => $dataCek['entry'][0]['resource']['id']);
+                $dataArr = array('status' => 1, 'Response' => $dataCek, 'access_token' => $dataAccess, 'id' => $dataCek['entry'][0]['resource']['id']);
                 // echo json_encode($dataArr);
                 return $dataArr;
             } else {
