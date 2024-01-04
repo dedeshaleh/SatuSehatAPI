@@ -50,7 +50,7 @@ class BackApi extends MY_Controller
     }
     public function GetToken($AksesToken)
     {
-        $q = $this->db->query("SELECT * FROM SatuSehat.Environment WHERE Branch = 'BHI' AND Status = 'DEV' ")->row();
+        $q = $this->db->query("SELECT * FROM SatuSehat.Environment WHERE Branch = 'BHI' AND Status = 'PROD' ")->row();
 
         $data = array(
             "client_id" => $q->client_id,
