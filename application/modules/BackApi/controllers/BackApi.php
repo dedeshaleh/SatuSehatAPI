@@ -542,8 +542,9 @@ class BackApi extends MY_Controller
                 }else{
                     echo json_encode($cek);
                     $Resp = json_encode($cek['Response']);
+                    $idSatu = $cek['id'];
                     // echo $Resp;
-                    $this->db->query("UPDATE DB_Master_Fix.dbo.Line_of_service SET ID_Satu_sehat = '$cek->id' WHERE Poly_Type = '$KodeRuangan'");
+                    $this->db->query("UPDATE DB_Master_Fix.dbo.Line_of_service SET ID_Satu_sehat = '$idSatu' WHERE Poly_Type = '$KodeRuangan'");
                     $this->db->query("UPDATE EMR.SatuSehat.Log_Token SET Payload = '$data', Deskripsi = '$Resp' WHERE access_token = '$dataAccess'");
                 }
                 // Handle non-200 status code
