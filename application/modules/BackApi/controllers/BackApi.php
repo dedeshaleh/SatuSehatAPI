@@ -530,7 +530,7 @@ class BackApi extends MY_Controller
                 $dataCek = json_decode($response);
                 $dataArr = array('ValReturn' => $dataCek, 'access_token' => $dataAccess, 'Id' => $dataCek->id);
                 $this->db->query("UPDATE DB_Master_Fix.dbo.Line_of_service SET ID_Satu_sehat = '$dataCek->id' WHERE Poly_Type = '$KodeRuangan'");
-                $this->db->query("UPDATE EMR.SatuSehat.Log_Token SET Deskripsi = '$response' WHERE access_token = '$dataAccess'");
+                $this->db->query("UPDATE EMR.SatuSehat.Log_Token SET Payload = '$data', Deskripsi = '$response' WHERE access_token = '$dataAccess'");
                 echo json_encode($dataArr);
             } else {
                 $cek = $this->GetLokasiUpdate($NoOrganisasi, $KodeRuangan);
@@ -541,8 +541,10 @@ class BackApi extends MY_Controller
                     echo "Response: $response\n";
                 }else{
                     echo json_encode($cek);
+                    $Resp = json_encode($cek['Response']);
+                    // echo $Resp;
                     $this->db->query("UPDATE DB_Master_Fix.dbo.Line_of_service SET ID_Satu_sehat = '$cek->id' WHERE Poly_Type = '$KodeRuangan'");
-                    $this->db->query("UPDATE EMR.SatuSehat.Log_Token SET Deskripsi = '$cek->Response' WHERE access_token = '$dataAccess'");
+                    $this->db->query("UPDATE EMR.SatuSehat.Log_Token SET Payload = '$data', Deskripsi = '$Resp' WHERE access_token = '$dataAccess'");
                 }
                 // Handle non-200 status code
                 // echo "HTTP Error: $httpCode\n";
