@@ -50,7 +50,7 @@ class BackApi extends MY_Controller
     }
     public function GetToken($AksesToken)
     {
-        $q = $this->db->query("SELECT * FROM SatuSehat.Environment WHERE Branch = 'BHI' AND Status = 'PROD' ")->row();
+        $q = $this->db->query("SELECT * FROM SatuSehat.Environment WHERE Branch = 'BHI' AND Status = 'DEV' ")->row();
 
         $data = array(
             "client_id" => $q->client_id,
@@ -98,7 +98,7 @@ class BackApi extends MY_Controller
         
                 $this->db->insert('SatuSehat.Log_Token', $dataToken);
                 // Build the response in the desired format
-                $dataArr = array('ValReturn' => $dataCek, 'base_url' => $q->base_url, 'NoOrganisasi' => $q->NoOrganisasi);
+                $dataArr = array('ValReturn' => $dataCek, 'base_url' => $q->base_url, 'NoOrganisasi' => $q->NoOrganisasi, "DataToken" => $dataToken);
                 // echo json_encode($dataArr);
                 return $dataArr;
                
@@ -151,6 +151,9 @@ class BackApi extends MY_Controller
                 // Decode and handle the response
                 $dataCek = json_decode($response);
                 $dataArr = array('ValReturn' => $dataCek, 'access_token' => $dataAccess);
+                $IdCek = $dataCek->entry[0]->resource;
+                $NamaPasien = $dataCek->entry[0]->resource->name[0]->text;
+                $this->db->query("UPDATE DB_Master_Fix.dbo.Pasien SET ID_Satu_Sehat = '$IdCek->id', Nama_Pasien_SatuSehat = '$NamaPasien' WHERE ID_No = '$NIK'");
                 echo json_encode($dataArr);
             } else {
                 // Handle non-200 status code
@@ -247,7 +250,8 @@ class BackApi extends MY_Controller
                 $dataArr = array('ValReturn' => $dataCek, 'access_token' => $dataAccess);
                 // $IdDokter = $dataCek['entry'];
                 $IdCek = $dataCek->entry[0]->resource;
-                $this->db->query("UPDATE DB_Master_Fix.dbo.Dokter SET ID_Satu_Sehat = '$IdCek->id' WHERE No_KTP = '$NIK'");
+                $NamaDokter = $dataCek->entry[0]->resource->name[0]->text;
+                $this->db->query("UPDATE DB_Master_Fix.dbo.Dokter SET ID_Satu_Sehat = '$IdCek->id', Nama_Dr_SatuSehat = '$NamaDokter' WHERE No_KTP = '$NIK'");
                 echo json_encode($dataArr);
             } else {
                 // Handle non-200 status code
@@ -612,12 +616,13 @@ class BackApi extends MY_Controller
     }
 
 
-    public function EncounterKunjunganAwal($ID=null) 
+    public function EncounterKunjunganAwal($NoRegis=null) 
     {
         date_default_timezone_set("Asia/Jakarta");
         $dataToken = $this->GetToken("Post Kunjungan Awal");
-        $json = file_get_contents("php://input"); // json string
-        $object = json_decode($json); // php object
+        // $json = file_get_contents("php://input"); // json string
+        // $object = json_decode($json); // php object
+        $object = $this->db->query("SELECT * FROM EMR.SatuSehat.vw_SatuSehat WHERE NoRegistrasi = '$NoRegis'")->row();
         $NoRegistrasi = $object->NoRegistrasi;
         $NikPasien = $object->NikPasien;
         $NamaPasien = $object->NamaPasien;
@@ -691,6 +696,7 @@ class BackApi extends MY_Controller
             }
         }';
 
+        
         // $json = json_encode($data, JSON_PRETTY_PRINT);
         $dataUrl = $dataToken['base_url'];
         $dataAccess = $dataToken['ValReturn']->access_token;
@@ -718,12 +724,35 @@ class BackApi extends MY_Controller
                 // Decode and handle the response
                 $dataCek = json_decode($response);
                 $dataArr = array('ValReturn' => $dataCek, 'access_token' => $dataAccess);
-                $this->db->query("UPDATE EMR.SatuSehat.Log_Token SET Payload = '$data', Deskripsi = '$response' WHERE access_token = '$dataAccess'");
+                $TokenContinue = array(
+                    'NoTrx' => uniqid(true).date("Y_m_d"),
+                    'access_token' => $dataAccess,
+                    'client_id' => $dataToken["DataToken"]['client_id'],
+                    'expires_in' => $dataToken["DataToken"]['expires_in'],
+                    'CreateDate' => date("Y-m-d H:i:s"),
+                    'Deskripsi' => $response,
+                    'Payload' => $data,
+                    'TokenAkses' => "Post Kunjungan Awal"
+                );
+        
+                $this->db->insert('SatuSehat.Log_Token', $TokenContinue);
+                $TempId = array(
+                    "NoTrx" => uniqid(true).date("_Y-m-d"),
+                    "NoRegis" => $NoRegistrasi,
+                    "ID_SatuSehat" => $dataCek->id,
+                    "Status" => "Encounter - Awal",
+                    "CreateDate" => date("Y-m-d H:i:s"),
+                    "Token" => $dataAccess
+                );
+                $this->db->insert("EMR.SatuSehat.Temp_ID", $TempId);
+                $this->EncounterUpdateInprogres($object, $dataCek);
                 echo json_encode($dataArr);
             } else {
                 // Handle non-200 status code
-                echo "HTTP Error: $httpCode\n";
+                echo "HTTP Error: Post Kunjungan Awal $httpCode\n";
                 echo "Response: $response\n";
+                echo "Payload: $data\n";
+                die();
             }
         }
 
@@ -731,14 +760,14 @@ class BackApi extends MY_Controller
 
     }
 
-    public function EncounterUpdateInprogres($ID=null) 
+    public function EncounterUpdateInprogres($object, $HasilEncounter) 
     {
         date_default_timezone_set("Asia/Jakarta");
         $dataToken = $this->GetToken("Post Kunjungan InProgres");
-        $json = file_get_contents("php://input"); // json string
-        $object = json_decode($json); // php object
+        // $json = file_get_contents("php://input"); // json string
+        // $object = json_decode($json); // php object
         $NoRegistrasi = $object->NoRegistrasi;
-        $IdEncounter = $object->IdEncounter;
+        $IdEncounter = $HasilEncounter->id;
         $NikPasien = $object->NikPasien;
         $NamaPasien = $object->NamaPasien;
         $NikDokter = $object->NikDokter;
@@ -746,7 +775,7 @@ class BackApi extends MY_Controller
         $IdLocation = $object->IdLocation;
         $NamaLokasi = $object->NamaLokasi;
         $DateInprogres = $object->DateInprogres;
-        $DateAwalCounter = $object->DateAwalCounter;
+        $DateAwalCounter = $object->DateAwal;
         $NoOrganisasi = $dataToken['NoOrganisasi'];
 
         $data = '{
@@ -848,12 +877,36 @@ class BackApi extends MY_Controller
                 // Decode and handle the response
                 $dataCek = json_decode($response);
                 $dataArr = array('ValReturn' => $dataCek, 'access_token' => $dataAccess);
-                $this->db->query("UPDATE EMR.SatuSehat.Log_Token SET Payload = '$data', Deskripsi = '$response' WHERE access_token = '$dataAccess'");
+                $TokenContinue = array(
+                    'NoTrx' => uniqid(true).date("Y_m_d"),
+                    'access_token' => $dataAccess,
+                    'client_id' => $dataToken["DataToken"]['client_id'],
+                    'expires_in' => $dataToken["DataToken"]['expires_in'],
+                    'CreateDate' => date("Y-m-d H:i:s"),
+                    'Deskripsi' => $response,
+                    'Payload' => $data,
+                    'TokenAkses' => "Post Kunjungan Inprogress"
+                );
+        
+                $this->db->insert('SatuSehat.Log_Token', $TokenContinue);
+                $TempId = array(
+                    "NoTrx" => uniqid(true).date("_Y-m-d"),
+                    "NoRegis" => $NoRegistrasi,
+                    "ID_SatuSehat" => $dataCek->id,
+                    "Status" => "Encounter - InProgress",
+                    "CreateDate" => date("Y-m-d H:i:s"),
+                    "Token" => $dataAccess
+                );
+                $this->db->insert("EMR.SatuSehat.Temp_ID", $TempId);
+                $this->ConditionPrimary($object, $dataCek, $dataCek->id);
+
+                // $this->db->query("UPDATE EMR.SatuSehat.Log_Token SET Payload = '$data', Deskripsi = '$response' WHERE access_token = '$dataAccess'");
                 echo json_encode($dataArr);
             } else {
                 // Handle non-200 status code
-                echo "HTTP Error: $httpCode\n";
+                echo "HTTP Error: Post Kunjungan InProgres $httpCode\n";
                 echo "Response: $response\n";
+                echo "Payload: $data\n";
             }
         }
 
@@ -861,19 +914,19 @@ class BackApi extends MY_Controller
 
     }
 
-    public function ConditionPrimary($ID=null) 
+    public function ConditionPrimary($object, $dataCek, $IdInprogres) 
     {
         date_default_timezone_set("Asia/Jakarta");
-        $dataToken = $this->GetToken("Post Kunjungan InProgres");
-        $json = file_get_contents("php://input"); // json string
-        $object = json_decode($json); // php object
-        $EncounterInprogres = $object->EncounterInprogres;
+        $dataToken = $this->GetToken("Post Condition Primary");
+        // $json = file_get_contents("php://input"); // json string
+        // $object = json_decode($json); // php object
+        $EncounterInprogres = $IdInprogres;
         $NikPasien = $object->NikPasien;
         $NamaPasien = $object->NamaPasien;
-        $KodeICD10 = $object->KodeICD10;
-        $NamaICD10 = $object->NamaICD10;
-        $DateRecord = $object->DateRecord;
-        $NoRegistrasi = "TEST-01";
+        $KodeICD10 = $object->KodeICD10Primary;
+        $NamaICD10 = $object->NamaICD10Primary;
+        $DateRecord = $object->DateRecordPrimary;
+        $NoRegistrasi = $object->NoRegistrasi;
         $NoOrganisasi = $dataToken['NoOrganisasi'];
         $TglPendek = date('Y-m-d', strtotime($DateRecord));
 
@@ -955,12 +1008,35 @@ class BackApi extends MY_Controller
                 // Decode and handle the response
                 $dataCek = json_decode($response);
                 $dataArr = array('ValReturn' => $dataCek, 'access_token' => $dataAccess);
-                $this->db->query("UPDATE EMR.SatuSehat.Log_Token SET Payload = '$data', Deskripsi = '$response' WHERE access_token = '$dataAccess'");
+                $TokenContinue = array(
+                    'NoTrx' => uniqid(true).date("Y_m_d"),
+                    'access_token' => $dataAccess,
+                    'client_id' => $dataToken["DataToken"]['client_id'],
+                    'expires_in' => $dataToken["DataToken"]['expires_in'],
+                    'CreateDate' => date("Y-m-d H:i:s"),
+                    'Deskripsi' => $response,
+                    'Payload' => $data,
+                    'TokenAkses' => "Post Condition Pertama"
+                );
+        
+                $this->db->insert('SatuSehat.Log_Token', $TokenContinue);
+                $TempId = array(
+                    "NoTrx" => uniqid(true).date("_Y-m-d"),
+                    "NoRegis" => $NoRegistrasi,
+                    "ID_SatuSehat" => $dataCek->id,
+                    "Status" => "Condition - Primary",
+                    "CreateDate" => date("Y-m-d H:i:s"),
+                    "Token" => $dataAccess
+                );
+                $this->db->insert("EMR.SatuSehat.Temp_ID", $TempId);
+                $this->ConditionSecondary($object, $dataCek, $IdInprogres, $dataCek->id);
+                // $this->db->query("UPDATE EMR.SatuSehat.Log_Token SET Payload = '$data', Deskripsi = '$response' WHERE access_token = '$dataAccess'");
                 echo json_encode($dataArr);
             } else {
                 // Handle non-200 status code
-                echo "HTTP Error: $httpCode\n";
+                echo "HTTP Error: Post Condition Primary $httpCode\n";
                 echo "Response: $response\n";
+                echo "Payload: $data\n";
             }
         }
 
@@ -968,20 +1044,20 @@ class BackApi extends MY_Controller
 
     }
 
-    public function ConditionSecondary($ID=null) 
+    public function ConditionSecondary($object, $dataCek, $IdInprogres, $IdKondisiPrimary) 
     {
         date_default_timezone_set("Asia/Jakarta");
-        $dataToken = $this->GetToken("Post Kunjungan InProgres");
-        $json = file_get_contents("php://input"); // json string
-        $object = json_decode($json); // php object
-        $EncounterInprogres = $object->EncounterInprogres;
+        $dataToken = $this->GetToken("Post Condition Secondary");
+        // $json = file_get_contents("php://input"); // json string
+        // $object = json_decode($json); // php object
+        $EncounterInprogres = $IdInprogres;
         $NikPasien = $object->NikPasien;
         $NamaPasien = $object->NamaPasien;
-        $KodeICD10 = $object->KodeICD10;
-        $NamaICD10 = $object->NamaICD10;
-        $DateRecord = $object->DateRecord;
+        $KodeICD10 = $object->KodeICD10Secondary;
+        $NamaICD10 = $object->NamaICD10Secondary;
+        $DateRecord = $object->DateRecordSecondary;
         $TextEncounter = $object->TextEncounter;
-        $NoRegistrasi = "TEST-01";
+        $NoRegistrasi = $object->NoRegistrasi;
         $NoOrganisasi = $dataToken['NoOrganisasi'];
         $TglPendek = date('Y-m-d', strtotime($DateRecord));
 
@@ -1064,12 +1140,35 @@ class BackApi extends MY_Controller
                 // Decode and handle the response
                 $dataCek = json_decode($response);
                 $dataArr = array('ValReturn' => $dataCek, 'access_token' => $dataAccess);
-                $this->db->query("UPDATE EMR.SatuSehat.Log_Token SET Payload = '$data', Deskripsi = '$response' WHERE access_token = '$dataAccess'");
+                $TokenContinue = array(
+                    'NoTrx' => uniqid(true).date("Y_m_d"),
+                    'access_token' => $dataToken["DataToken"]->access_token,
+                    'client_id' => $dataToken["DataToken"]->client_id,
+                    'expires_in' => $dataToken["DataToken"]->expires_in,
+                    'CreateDate' => date("Y-m-d H:i:s"),
+                    'Deskripsi' => $response,
+                    'Payload' => $data,
+                    'TokenAkses' => $dataAccess
+                );
+        
+                $this->db->insert('SatuSehat.Log_Token', $TokenContinue);
+                $TempId = array(
+                    "NoTrx" => uniqid(true).date("_Y-m-d"),
+                    "NoRegis" => $NoRegistrasi,
+                    "ID_SatuSehat" => $dataCek->id,
+                    "Status" => "Conditon - Secondary",
+                    "CreateDate" => date("Y-m-d H:i:s"),
+                    "Token" => $dataAccess
+                );
+                $this->db->insert("EMR.SatuSehat.Temp_ID", $TempId);
+                $this->EncounterUpdateFinish($object, $dataCek, $IdInprogres, $IdKondisiPrimary, $dataCek->id);
+                // $this->db->query("UPDATE EMR.SatuSehat.Log_Token SET Payload = '$data', Deskripsi = '$response' WHERE access_token = '$dataAccess'");
                 echo json_encode($dataArr);
             } else {
                 // Handle non-200 status code
-                echo "HTTP Error: $httpCode\n";
+                echo "HTTP Error: Post Condition Secondary $httpCode\n";
                 echo "Response: $response\n";
+                echo "Payload: $data\n";
             }
         }
 
@@ -1077,14 +1176,13 @@ class BackApi extends MY_Controller
 
     }
 
-    public function EncounterUpdateFinish($ID=null) 
+    public function EncounterUpdateFinish($object, $dataCek, $IdInprogres, $IdKondisiPrimary, $IdKondisiSecondary) 
     {
         date_default_timezone_set("Asia/Jakarta");
-        $dataToken = $this->GetToken("Post Kunjungan InProgres");
-        $json = file_get_contents("php://input"); // json string
-        $object = json_decode($json); // php object
+        $dataToken = $this->GetToken("Post Kunjungan Finish");
+        // $json = file_get_contents("php://input"); // json string
+        // $object = json_decode($json); // php object
         $NoRegistrasi = $object->NoRegistrasi;
-        $IdEncounter = $object->IdEncounter;
         $NikPasien = $object->NikPasien;
         $NamaPasien = $object->NamaPasien;
         $NikDokter = $object->NikDokter;
@@ -1094,15 +1192,15 @@ class BackApi extends MY_Controller
         $DateAwal = $object->DateAwal;
         $DateInprogres = $object->DateInprogres;
         $DateAkhir = $object->DateAkhir;
-        $IdKondisiPrimary = $object->IdKondisiPrimary;
-        $DeskripsiKondisiPrimary = $object->DeskripsiKondisiPrimary;
-        $IdKondisiSecondary = $object->IdKondisiSecondary;
-        $DeskripsiKondisiSecondary = $object->DeskripsiKondisiSecondary;
+        // $IdKondisiPrimary = $object->IdKondisiPrimary;
+        $DeskripsiKondisiPrimary = $object->NamaICD10Primary;
+        // $IdKondisiSecondary = $object->IdKondisiSecondary;
+        $DeskripsiKondisiSecondary = $object->NamaICD10Secondary;
         $NoOrganisasi = $dataToken['NoOrganisasi'];
 
         $data = '{
             "resourceType": "Encounter",
-            "id": "'.$IdEncounter.'",
+            "id": "'.$IdInprogres.'",
             "identifier": [
                 {
                     "system": "http://sys-ids.kemkes.go.id/encounter/'.$NoOrganisasi.'",
@@ -1241,13 +1339,34 @@ class BackApi extends MY_Controller
             if ($httpCode == 201 || $httpCode == 200) {
                 // Decode and handle the response
                 $dataCek = json_decode($response);
-                $this->db->query("UPDATE EMR.SatuSehat.Log_Token SET Payload = '$data', Deskripsi = '$response' WHERE access_token = '$dataAccess'");
-                $dataArr = array('ValReturn' => $dataCek, 'access_token' => $dataAccess);
+                $TokenContinue = array(
+                    'NoTrx' => uniqid(true).date("Y_m_d"),
+                    'access_token' => $dataToken["DataToken"]->access_token,
+                    'client_id' => $dataToken["DataToken"]->client_id,
+                    'expires_in' => $dataToken["DataToken"]->expires_in,
+                    'CreateDate' => date("Y-m-d H:i:s"),
+                    'Deskripsi' => $response,
+                    'Payload' => $data,
+                    'TokenAkses' => $dataAccess
+                );
+        
+                $this->db->insert('SatuSehat.Log_Token', $TokenContinue);
+                $TempId = array(
+                    "NoTrx" => uniqid(true).date("_Y-m-d"),
+                    "NoRegis" => $NoRegistrasi,
+                    "ID_SatuSehat" => $dataCek->id,
+                    "Status" => "Encounter - Finish",
+                    "CreateDate" => date("Y-m-d H:i:s"),
+                    "Token" => $dataAccess
+                );
+                $this->db->insert("EMR.SatuSehat.Temp_ID", $TempId);
+                $dataArr = array('Status' => 1, 'ValReturn' => $dataCek, 'access_token' => $dataAccess);
                 echo json_encode($dataArr);
             } else {
                 // Handle non-200 status code
-                echo "HTTP Error: $httpCode\n";
+                echo "HTTP Error: Post Kunjungan Finish $httpCode\n";
                 echo "Response: $response\n";
+                echo "Payload: $data\n";
             }
         }
 
