@@ -1425,7 +1425,7 @@ class BackApi extends MY_Controller
                 $this->db->insert('SatuSehat.Log_Token', $dataToken);
                 // Build the response in the desired format
                 $dataArr = array('ValReturn' => $dataCek, "DataToken" => $dataToken);
-                // echo json_encode($dataArr);
+                echo json_encode($dataArr);
                 return $dataArr;
                
             } else {
@@ -1445,7 +1445,7 @@ class BackApi extends MY_Controller
     public function GetKFACode($page,$Size,$product_type)
     {
         // $q = $this->db->query("SELECT * FROM SatuSehat.Environment WHERE Branch = 'BHI' AND Status = 'DEV' ")->row();
-        $dataToken = $this->GetToken("Akses KFA Untuk Insert Database");
+        $dataToken = $this->GetTokenKFACode("Akses KFA Untuk Insert Database");
         // Create a new cURL resource
         $ch = curl_init();
      
