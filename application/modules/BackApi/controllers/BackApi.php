@@ -50,7 +50,7 @@ class BackApi extends MY_Controller
     }
     public function GetToken($AksesToken)
     {
-        $q = $this->db->query("SELECT * FROM SatuSehat.Environment WHERE Branch = 'BHI' AND Status = 'DEV' ")->row();
+        $q = $this->db->query("SELECT * FROM SatuSehat.Environment WHERE Branch = 'BHI' AND Status = 'PROD' ")->row();
 
         $data = array(
             "client_id" => $q->client_id,
@@ -150,7 +150,7 @@ class BackApi extends MY_Controller
             if ($httpCode == 200) {
                 // Decode and handle the response
                 $dataCek = json_decode($response);
-                $dataArr = array('ValReturn' => $dataCek, 'access_token' => $dataAccess);
+                $dataArr = array('Nik' => $NIK, 'url'=> $url, 'ValReturn' => $dataCek, 'access_token' => $dataAccess);
                 $IdCek = $dataCek->entry[0]->resource;
                 $NamaPasien = $dataCek->entry[0]->resource->name[0]->text;
                 $this->db->query("UPDATE DB_Master_Fix.dbo.Pasien SET ID_Satu_Sehat = '$IdCek->id', Nama_Pasien_SatuSehat = '$NamaPasien' WHERE ID_No = '$NIK'");
@@ -1474,13 +1474,47 @@ class BackApi extends MY_Controller
             echo 'Error: ' . curl_error($ch);
         } else {
             // Decode the response JSON
-            // $dataCek = json_decode($response);
+            $dataCek = json_decode($response);
 
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         
             // Check the status in the response
             if ($httpCode == 200) {
-                echo json_encode($response);
+                // echo json_encode($response);
+               $dataHasil = $dataCek->items->data;
+               $dataFix = array();
+               foreach ($dataHasil as $va) {
+                $q = $this->db->query("SELECT * FROM EMR.SatuSehat.MasterKFA WHERE kfa_code = '$va->kfa_code'")->num_rows();
+                if ($q <= 0) {
+                    $dataFix[] = array(
+                        "kfa_code" => $va->kfa_code,
+                        "name" => $va->name,
+                        "farmalkes_type_code" => $va->farmalkes_type->code,
+                        "farmalkes_type_name" => $va->farmalkes_type->name,
+                        "farmalkes_type_group" => $va->farmalkes_type->group,
+                        "manufacturer" => $va->manufacturer
+                    );                    
+                } 
+               }
+               echo json_encode($dataCek);
+die();
+               if (count($dataFix) > 0) {
+                $this->db->insert_batch("EMR.SatuSehat.MasterKFA", $dataFix);
+                $hasil = $this->db->affected_rows(); 
+                $data = array(
+                    "status" => 200,
+                    "message" => "Data Berhasil Di Insert $hasil",
+                    "data" => $dataFix
+                );
+                echo json_encode($data);
+               }else{
+                $data = array(
+                    "status" => 200,
+                    "message" => "Tidak Ada Data Insert",
+                    "data" => $dataFix
+                );
+                echo json_encode($data);
+               }
                
             } else {
                 // echo $response;
