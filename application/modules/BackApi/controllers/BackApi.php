@@ -74,7 +74,7 @@ class BackApi extends MY_Controller
                 'NoTrx' => uniqid(true).date("Y_m_d"),
                 'access_token' => $GenToken,
                 'client_id' => $client_id,
-                'expires_in' => 9000,
+                'expires_in' => 3600,
                 'CreateDate' => date("Y-m-d H:i:s"),
                 'TokenAkses' => "Get Credential"
             );
