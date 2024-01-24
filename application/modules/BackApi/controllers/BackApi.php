@@ -99,7 +99,8 @@ class BackApi extends MY_Controller
 
     public function GetToken($AksesToken)
     {
-        $q = $this->db->query("SELECT * FROM SatuSehat.Environment WHERE Branch = 'BHI' AND Status = 'DEV' ")->row();
+        $EnvData = $this->config->item('EnvData');
+        $q = $this->db->query("SELECT * FROM SatuSehat.Environment WHERE Branch = 'BHI' AND Status = '$EnvData' ")->row();
 
         $data = array(
             "client_id" => $q->client_id,
@@ -1690,6 +1691,7 @@ class BackApi extends MY_Controller
 
     public function GetTokenKFACode($AksesToken)
     {
+        
         $q = $this->db->query("SELECT * FROM SatuSehat.Environment WHERE Branch = 'BHI' AND Status = 'PROD' ")->row();
         $data = array(
             "client_id" => $q->client_id,
