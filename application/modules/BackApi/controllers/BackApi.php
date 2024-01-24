@@ -1740,7 +1740,7 @@ class BackApi extends MY_Controller
                 $this->db->insert('SatuSehat.Log_Token', $dataToken);
                 // Build the response in the desired format
                 $dataArr = array('ValReturn' => $dataCek, "DataToken" => $dataToken);
-                echo json_encode($dataArr);
+                // echo json_encode($dataArr);
                 return $dataArr;
                
             } else {
