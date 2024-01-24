@@ -166,8 +166,12 @@ class BackApi extends MY_Controller
     public function GetPasienByNIk() 
     {
         date_default_timezone_set("Asia/Jakarta");
-        $NIK = $this->input->post("NIK");
-        $Token = $this->input->post("Token");
+
+        $json = file_get_contents("php://input"); // json string
+        $object = json_decode($json); // php object
+
+        $NIK = $object->NIK;
+        $Token = $object->Token;
 
         $q2 = $this->db->query("SELECT * FROM EMR.SatuSehat.Log_Token WHERE access_token = '$Token' ")->row();
 
@@ -237,10 +241,13 @@ class BackApi extends MY_Controller
     public function GetPasienByName() 
     {
         date_default_timezone_set("Asia/Jakarta");
-        $name = $this->input->post("name");
-        $dob = $this->input->post("dob");
-        $gender = $this->input->post("gender");
-        $Token = $this->input->post("Token");
+        $json = file_get_contents("php://input"); // json string
+        $object = json_decode($json); // php object
+
+        $name = $object->name;
+        $dob = $object->dob;
+        $gender = $object->gender;
+        $Token = $object->Token;
 
         $q2 = $this->db->query("SELECT * FROM EMR.SatuSehat.Log_Token WHERE access_token = '$Token' ")->row();
 
@@ -311,8 +318,11 @@ class BackApi extends MY_Controller
     public function GetDokterNIK() 
     {
         date_default_timezone_set("Asia/Jakarta");
-        $NIK = $this->input->post("NIK");
-        $Token = $this->input->post("Token");
+
+        $json = file_get_contents("php://input"); // json string
+        $object = json_decode($json); // php object
+        $NIK = $object->NIK;
+        $Token = $object->Token;
 
         $q2 = $this->db->query("SELECT * FROM EMR.SatuSehat.Log_Token WHERE access_token = '$Token' ")->row();
 
@@ -383,10 +393,14 @@ class BackApi extends MY_Controller
     public function GetDokterByName() 
     {
         date_default_timezone_set("Asia/Jakarta");
-        $name = $this->input->post("name");
-        $dob = $this->input->post("dob");
-        $gender = $this->input->post("gender");
-        $Token = $this->input->post("Token");
+
+        $json = file_get_contents("php://input"); // json string
+        $object = json_decode($json); // php object
+
+        $name = $object->name;
+        $dob = $object->dob;
+        $gender = $object->gender;
+        $Token = $object->Token;
 
         $q2 = $this->db->query("SELECT * FROM EMR.SatuSehat.Log_Token WHERE access_token = '$Token' ")->row();
 
@@ -454,8 +468,11 @@ class BackApi extends MY_Controller
     public function GetOrganization() 
     {
         date_default_timezone_set("Asia/Jakarta");
-        $Kode = $this->input->post("Kode");
-        $Token = $this->input->post("Token");
+        $json = file_get_contents("php://input"); // json string
+        $object = json_decode($json); // php object
+
+        $Kode = $object->Kode;
+        $Token = $object->Token;
 
         $q2 = $this->db->query("SELECT * FROM EMR.SatuSehat.Log_Token WHERE access_token = '$Token' ")->row();
 
@@ -523,9 +540,12 @@ class BackApi extends MY_Controller
     {
         date_default_timezone_set("Asia/Jakarta");
 
-        $OrgID = $this->input->post("Kode");
-        $KodeRuangan = $this->input->post("KodeRuangan");
-        $Token = $this->input->post("Token");
+        $json = file_get_contents("php://input"); // json string
+        $object = json_decode($json); // php object
+
+        $OrgID = $object->Kode;
+        $KodeRuangan = $object->KodeRuangan;
+        $Token = $object->Token;
 
         $q2 = $this->db->query("SELECT * FROM EMR.SatuSehat.Log_Token WHERE access_token = '$Token' ")->row();
 
@@ -593,8 +613,11 @@ class BackApi extends MY_Controller
     {
         date_default_timezone_set("Asia/Jakarta");
 
-        $KodePoli = $this->input->post("KodePoli");
-        $Token = $this->input->post("Token");
+        $json = file_get_contents("php://input"); // json string
+        $object = json_decode($json); // php object
+
+        $KodePoli = $object->KodePoli;
+        $Token = $object->Token;
 
         $q2 = $this->db->query("SELECT * FROM EMR.SatuSehat.Log_Token WHERE access_token = '$Token' ")->row();
 
@@ -823,8 +846,12 @@ class BackApi extends MY_Controller
     public function BatchSend() 
     {
         date_default_timezone_set("Asia/Jakarta");
-        $NoRegis = $this->input->post("NoRegis");
-        $Token = $this->input->post("Token");
+
+        $json = file_get_contents("php://input"); // json string
+        $object = json_decode($json); // php object
+
+        $NoRegis = $object->NoRegis;
+        $Token = $object->Token;
 
         $q2 = $this->db->query("SELECT * FROM EMR.SatuSehat.Log_Token WHERE access_token = '$Token' ")->row();
         $object = $this->db->query("SELECT * FROM EMR.SatuSehat.vw_SatuSehat WHERE NoRegistrasi = '$NoRegis'")->row();
@@ -1908,10 +1935,13 @@ class BackApi extends MY_Controller
     function BatchHit() {
         set_time_limit((60*60)*2);
         // $q = $this->db->query("SELECT * FROM SatuSehat.Environment WHERE Branch = 'BHI' AND Status = 'DEV' ")->row();
-        $Token = $this->input->post("Token");
-        $page = $this->input->post("page");
-        $size = $this->input->post("size");
-        $product_type = $this->input->post("product_type");
+        $json = file_get_contents("php://input"); // json string
+        $object = json_decode($json); // php object
+
+        $page = $object->page;
+        $size = $object->size;
+        $product_type = $object->product_type;
+        $Token = $object->Token;
 
         $q2 = $this->db->query("SELECT * FROM EMR.SatuSehat.Log_Token WHERE access_token = '$Token' ")->row();
 
@@ -2016,6 +2046,12 @@ class BackApi extends MY_Controller
     public function EncounterKunjunganAwal() 
     {
         date_default_timezone_set("Asia/Jakarta");
+        $json = file_get_contents("php://input"); // json string
+        $object = json_decode($json); // php object
+
+        $NoRegis = $object->NoRegis;
+        $Token = $object->Token;
+
         $NoRegis = $this->input->post("NoRegis");
         $Token = $this->input->post("Token");
 
@@ -2190,8 +2226,11 @@ class BackApi extends MY_Controller
     public function EncounterUpdateInprogres_Single() 
     {
         date_default_timezone_set("Asia/Jakarta");
-        $NoRegistrasi = $this->input->post("NoRegis");
-        $Token = $this->input->post("Token");
+        $json = file_get_contents("php://input"); // json string
+        $object = json_decode($json); // php object
+
+        $NoRegis = $object->NoRegis;
+        $Token = $object->Token;
 
         $q2 = $this->db->query("SELECT * FROM EMR.SatuSehat.Log_Token WHERE access_token = '$Token' ")->row();
         $object = $this->db->query("SELECT * FROM EMR.SatuSehat.vw_SatuSehat WHERE NoRegistrasi = '$NoRegistrasi'")->row();
@@ -2383,9 +2422,12 @@ class BackApi extends MY_Controller
     public function ConditionPrimary_Single() 
     {
         date_default_timezone_set("Asia/Jakarta");
-        $NoRegistrasi = $this->input->post("NoRegis");
-        $Token = $this->input->post("Token");
+        $json = file_get_contents("php://input"); // json string
+        $object = json_decode($json); // php object
 
+        $NoRegistrasi = $object->NoRegis;
+        $Token = $object->Token;
+        
         $q2 = $this->db->query("SELECT * FROM EMR.SatuSehat.Log_Token WHERE access_token = '$Token' ")->row();
         $object = $this->db->query("SELECT * FROM EMR.SatuSehat.vw_SatuSehat WHERE NoRegistrasi = '$NoRegistrasi'")->row();
             $NoRegistrasi = $object->NoRegistrasi;
@@ -2553,8 +2595,11 @@ class BackApi extends MY_Controller
     public function ConditionSecondary_Single() 
     {
         date_default_timezone_set("Asia/Jakarta");
-        $NoRegistrasi = $this->input->post("NoRegis");
-        $Token = $this->input->post("Token");
+        $json = file_get_contents("php://input"); // json string
+        $object = json_decode($json); // php object
+
+        $NoRegistrasi = $object->NoRegis;
+        $Token = $object->Token;
 
         $q2 = $this->db->query("SELECT * FROM EMR.SatuSehat.Log_Token WHERE access_token = '$Token' ")->row();
         $object = $this->db->query("SELECT * FROM EMR.SatuSehat.vw_SatuSehat WHERE NoRegistrasi = '$NoRegistrasi'")->row();
@@ -2723,8 +2768,13 @@ class BackApi extends MY_Controller
     public function EncounterUpdateFinish_Single() 
     {
         date_default_timezone_set("Asia/Jakarta");
-        $NoRegistrasi = $this->input->post("NoRegis");
-        $Token = $this->input->post("Token");
+        
+        $json = file_get_contents("php://input"); // json string
+        $object = json_decode($json); // php object
+
+        $NoRegistrasi = $object->NoRegis;
+        $Token = $object->Token;
+
 
         $q2 = $this->db->query("SELECT * FROM EMR.SatuSehat.Log_Token WHERE access_token = '$Token' ")->row();
         $object = $this->db->query("SELECT * FROM EMR.SatuSehat.vw_SatuSehat WHERE NoRegistrasi = '$NoRegistrasi'")->row();
