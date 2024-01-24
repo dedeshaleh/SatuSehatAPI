@@ -52,10 +52,13 @@ class BackApi extends MY_Controller
     public function GetLogin()
     {
         date_default_timezone_set("Asia/Jakarta");
-        $Branch = $this->input->post("Branch");
-        $client_id = $this->input->post("client_id");
-        $status = $this->input->post("status");
-        $client_secret = $this->input->post("client_secret");
+        $json = file_get_contents("php://input"); // json string
+        $object = json_decode($json); // php object
+
+        $Branch = $object->Branch;
+        $client_id = $object->client_id;
+        $status = $object->status;
+        $client_secret = $object->client_secret;
 
         $q = $this->db->query("SELECT * FROM SatuSehat.Environment WHERE Branch = '$Branch' AND Status = '$status' AND client_id = '$client_id' AND client_secret = '$client_secret' ")->row();
         if ($q !== null) {
