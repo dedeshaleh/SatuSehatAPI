@@ -1004,7 +1004,8 @@ class BackApi extends MY_Controller
                     echo json_encode($dataArr);
                 } else {
                     // Handle non-200 status code
-                    $dataArr = array('Status' => 0, 'payload' => $data, 'access_token' => $dataAccess, 'httpError' => $httpCode, "Posisi" => "1");
+                    $hasil = json_decode($data);
+                    $dataArr = array('Status' => 0, 'payload' => $hasil, 'access_token' => $dataAccess, 'httpError' => $httpCode, "Posisi" => "1");
                     echo json_encode($dataArr);
                     // echo "HTTP Error: Post Kunjungan Awal $httpCode\n";
                     // echo "Response: $response\n";
@@ -1169,7 +1170,8 @@ class BackApi extends MY_Controller
                     echo json_encode($dataArr);
                 } else {
                     // Handle non-200 status code
-                    $dataArr = array('Status' => 0, 'payload' => $data, 'access_token' => $dataAccess, 'httpError' => $httpCode, "Posisi" => "2");
+                    $hasil = json_decode($data);
+                    $dataArr = array('Status' => 0, 'payload' => $hasil, 'access_token' => $dataAccess, 'httpError' => $httpCode, "Posisi" => "2");
                     echo json_encode($dataArr);
                     // echo "HTTP Error: Post Kunjungan InProgres $httpCode\n";
                     // echo "Response: $response\n";
@@ -1310,7 +1312,8 @@ class BackApi extends MY_Controller
                     echo json_encode($dataArr);
                 } else {
                     // Handle non-200 status code
-                    $dataArr = array('Status' => 0, 'payload' => $data, 'access_token' => $dataAccess, 'httpError' => $httpCode, "Posisi" => "3");
+                    $hasil = json_decode($data);
+                    $dataArr = array('Status' => 0, 'payload' => $hasil, 'access_token' => $dataAccess, 'httpError' => $httpCode, "Posisi" => "3");
                     echo json_encode($dataArr);
                     // echo "HTTP Error: Post Condition Primary $httpCode\n";
                     // echo "Response: $response\n";
@@ -1454,7 +1457,8 @@ class BackApi extends MY_Controller
                     echo json_encode($dataArr);
                 } else {
                     // Handle non-200 status code
-                    $dataArr = array('Status' => 0, 'payload' => $data, 'access_token' => $dataAccess, 'httpError' => $httpCode, "Posisi" => "4");
+                    $hasil = json_decode($data);
+                    $dataArr = array('Status' => 0, 'payload' => $hasil, 'access_token' => $dataAccess, 'httpError' => $httpCode, "Posisi" => "4");
                     echo json_encode($dataArr);
 
                     // echo "HTTP Error: Post Condition Secondary $httpCode\n";
@@ -1663,7 +1667,8 @@ class BackApi extends MY_Controller
                     echo json_encode($dataArr);
                 } else {
                     // Handle non-200 status code
-                    $dataArr = array('Status' => 0, 'payload' => $data, 'access_token' => $dataAccess, 'httpError' => $httpCode, "Posisi" => "5");
+                    $hasil = json_decode($data);
+                    $dataArr = array('Status' => 0, 'payload' => $hasil, 'access_token' => $dataAccess, 'httpError' => $httpCode, "Posisi" => "5");
                     echo json_encode($dataArr);
                     // echo "HTTP Error: Post Kunjungan Finish $httpCode\n";
                     // echo "Response: $response\n";
@@ -2206,7 +2211,8 @@ class BackApi extends MY_Controller
                     echo json_encode($dataArr);
                 } else {
                     // Handle non-200 status code
-                    $dataArr = array('Status' => 0, 'payload' => $data, 'access_token' => $dataAccess, 'httpError' => $httpCode, "Posisi" => "1");
+                    $hasil = json_decode($data);
+                    $dataArr = array('Status' => 0, 'payload' => $hasil, 'access_token' => $dataAccess, 'httpError' => $httpCode, "Posisi" => "1");
                     echo json_encode($dataArr);
                     // echo "HTTP Error: Post Kunjungan Awal $httpCode\n";
                     // echo "Response: $response\n";
@@ -2404,7 +2410,8 @@ class BackApi extends MY_Controller
                     echo json_encode($dataArr);
                 } else {
                     // Handle non-200 status code
-                    $dataArr = array('Status' => 0, 'response' => 400, 'payload' => $data, 'access_token' => $dataAccess, 'httpError' => $httpCode, "Posisi" => "2");
+                    $hasil = json_decode($data);
+                    $dataArr = array('Status' => 0, 'response' => 400, 'payload' => $hasil, 'access_token' => $dataAccess, 'httpError' => $httpCode, "Posisi" => "2");
                     echo json_encode($dataArr);
                     // echo "HTTP Error: Post Kunjungan InProgres $httpCode\n";
                     // echo "Response: $response\n";
@@ -2577,7 +2584,8 @@ class BackApi extends MY_Controller
                     echo json_encode($dataArr);
                 } else {
                     // Handle non-200 status code
-                    $dataArr = array('status' => 0, 'response' => 400, 'payload' => $data, 'access_token' => $dataAccess, 'httpError' => $httpCode, "Posisi" => "3");
+                    $hasil = json_decode($data);
+                    $dataArr = array('status' => 0, 'response' => 400, 'payload' => $hasil, 'access_token' => $dataAccess, 'httpError' => $httpCode, "Posisi" => "3");
                     echo json_encode($dataArr);
                     // echo "HTTP Error: Post Condition Primary $httpCode\n";
                     // echo "Response: $response\n";
@@ -2750,7 +2758,8 @@ class BackApi extends MY_Controller
                     echo json_encode($dataArr);
                 } else {
                     // Handle non-200 status code
-                    $dataArr = array('Status' => 0, 'response' => 400, 'payload' => $data, 'access_token' => $dataAccess, 'httpError' => $httpCode, "Posisi" => "4");
+                    $hasil = json_decode($data);
+                    $dataArr = array('Status' => 0, 'response' => 400, 'payload' => $hasil, 'access_token' => $dataAccess, 'httpError' => $httpCode, "Posisi" => "4");
                     echo json_encode($dataArr);
 
                     // echo "HTTP Error: Post Condition Secondary $httpCode\n";
@@ -2999,7 +3008,8 @@ class BackApi extends MY_Controller
                     echo json_encode($dataArr);
                 } else {
                     // Handle non-200 status code
-                    $dataArr = array('Status' => 0, 'response' => 400, 'payload' => $data, 'access_token' => $dataAccess, 'httpError' => $httpCode, "Posisi" => "5");
+                    $hasil = json_decode($data);
+                    $dataArr = array('Status' => 0, 'response' => 400, 'payload' => $hasil, 'access_token' => $dataAccess, 'httpError' => $httpCode, "Posisi" => "5");
                     echo json_encode($dataArr);
                     // echo "HTTP Error: Post Kunjungan Finish $httpCode\n";
                     // echo "Response: $response\n";
