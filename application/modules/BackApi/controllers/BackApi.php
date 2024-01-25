@@ -378,7 +378,7 @@ class BackApi extends MY_Controller
                 // $IdDokter = $dataCek['entry'];
                 $IdCek = $dataCek->entry[0]->resource;
                 $NamaDokter = $dataCek->entry[0]->resource->name[0]->text;
-                $this->db->query("UPDATE DB_Master_Fix.dbo.Dokter SET ID_Satu_Sehat = '$IdCek->id', Nama_Dr_SatuSehat = '$NamaDokter' WHERE No_KTP = '$NIK'");
+                $this->db->query("UPDATE DB_Master_Fix.dbo.Dokter SET ID_Satu_Sehat = '$IdCek->id', Nama_Dr_Satu_Sehat = '$NamaDokter' WHERE No_KTP = '$NIK'");
                 echo json_encode($dataArr);
             } else {
                 // Handle non-200 status code
