@@ -1357,136 +1357,144 @@ class BackApi extends MY_Controller
         date_default_timezone_set("Asia/Jakarta");
         $NoRegistrasi = $object->NoRegistrasi;
         $qCekTempId = $this->db->query("SELECT * FROM EMR.SatuSehat.Temp_ID WHERE NoRegis = '$NoRegistrasi' AND Status = 'Conditon - Secondary' ")->row();
+        $KodeICD10 = $object->KodeICD10Secondary;
 
-        if ($qCekTempId == null) {
-            $EncounterInprogres = $IdInprogres;
-            $NikPasien = $object->NikPasien;
-            $NamaPasien = $object->NamaPasien;
-            $KodeICD10 = $object->KodeICD10Secondary;
-            $NamaICD10 = $object->NamaICD10Secondary;
-            $DateRecord = $object->DateRecordSecondary;
-            $TextEncounter = $object->TextEncounter;
-            $NoRegistrasi = $object->NoRegistrasi;
-            $TglPendek = date('Y-m-d', strtotime($DateRecord));
-
-            $data = '{
-                "resourceType": "Condition",
-                "identifier": [
-                    {
-                        "system": "http://sys-ids.kemkes.go.id/encounter/'.$GetToken->NoOrganisasi.'",
-                        "value": "'.$NoRegistrasi.'"
-                    }
-                ],
-                "clinicalStatus": {
-                    "coding": [
+        if ($KodeICD10 == null) {
+            $this->EncounterUpdateFinish($object, $IdInprogres, $IdKondisiPrimary, $qCekTempId->ID_SatuSehat, $IdEncounter, $GetToken);
+        } else {
+            if ($qCekTempId == null) {
+                $EncounterInprogres = $IdInprogres;
+                $NikPasien = $object->NikPasien;
+                $NamaPasien = $object->NamaPasien;
+                $KodeICD10 = $object->KodeICD10Secondary;
+                $NamaICD10 = $object->NamaICD10Secondary;
+                $DateRecord = $object->DateRecordSecondary;
+                $TextEncounter = $object->TextEncounter;
+                $NoRegistrasi = $object->NoRegistrasi;
+                $TglPendek = date('Y-m-d', strtotime($DateRecord));
+    
+                $data = '{
+                    "resourceType": "Condition",
+                    "identifier": [
                         {
-                            "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
-                            "code": "active",
-                            "display": "Active"
+                            "system": "http://sys-ids.kemkes.go.id/encounter/'.$GetToken->NoOrganisasi.'",
+                            "value": "'.$NoRegistrasi.'"
                         }
-                    ]
-                },
-                "category": [
-                    {
+                    ],
+                    "clinicalStatus": {
                         "coding": [
                             {
-                                "system": "http://terminology.hl7.org/CodeSystem/condition-category",
-                                "code": "encounter-diagnosis",
-                                "display": "Encounter Diagnosis"
+                                "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+                                "code": "active",
+                                "display": "Active"
                             }
                         ]
-                    }
-                ],
-                "code": {
-                    "coding": [
+                    },
+                    "category": [
                         {
-                            "system": "http://hl7.org/fhir/sid/icd-10",
-                            "code": "'.$KodeICD10.'",
-                            "display": "'.$NamaICD10.'"
+                            "coding": [
+                                {
+                                    "system": "http://terminology.hl7.org/CodeSystem/condition-category",
+                                    "code": "encounter-diagnosis",
+                                    "display": "Encounter Diagnosis"
+                                }
+                            ]
                         }
-                    ]
-                },
-                "subject": {
-                    "reference": "Patient/'.$NikPasien.'",
-                    "display": "'.$NamaPasien.'"
-                },
-                "encounter": {
-                    "reference": "Encounter/'.$EncounterInprogres.'",
-                    "display": "'.$TextEncounter.'"
-                },
-                "onsetDateTime": "'.$DateRecord.'",
-                "recordedDate": "'.$DateRecord.'"
-            }
-            ';
-
-            // $json = json_encode($data, JSON_PRETTY_PRINT);
-            // echo $data;
-            // die();
-
-            $url = "$GetToken->dataUrl/Condition";
-            $ch = curl_init($url);
-
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-                'Content-Type: application/json',
-                'Authorization: Bearer ' . $GetToken->dataAccess
-            ));
-
-            $response = curl_exec($ch);
-
-            // Check for cURL errors
-            if (curl_errno($ch)) {
-                echo 'Error: ' . curl_error($ch);
-            } else {
-                // Check HTTP status code
-                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-                if ($httpCode == 201 || $httpCode == 200) {
-                    // Decode and handle the response
-                    $dataCek = json_decode($response);
-                    $dataArr = array('ValReturn' => $dataCek, 'access_token' => $GetToken->dataAccess);
-                    $TokenContinue = array(
-                        'NoTrx' => uniqid(true).date("Y_m_d"),
-                        'access_token' => $GetToken->access_token,
-                        'client_id' => $GetToken->client_id,
-                        'expires_in' => $GetToken->expires_in,
-                        'CreateDate' => date("Y-m-d H:i:s"),
-                        'Deskripsi' => json_encode($dataCek, TRUE),
-                        'Payload' => $data,
-                        'TokenAkses' => "Post Condition Kedua"
-                    );
-            
-                    $this->db->insert('SatuSehat.Log_Token', $TokenContinue);
-                    $TempId = array(
-                        "NoTrx" => uniqid(true).date("_Y-m-d"),
-                        "NoRegis" => $NoRegistrasi,
-                        "ID_SatuSehat" => $dataCek->id,
-                        "Status" => "Conditon - Secondary",
-                        "CreateDate" => date("Y-m-d H:i:s"),
-                        "Token" => $GetToken->dataAccess
-                    );
-                    $this->db->insert("EMR.SatuSehat.Temp_ID", $TempId);
-                    $this->EncounterUpdateFinish($object, $IdInprogres, $IdKondisiPrimary, $dataCek->id, $IdEncounter, $GetToken);
-                    // $this->db->query("UPDATE EMR.SatuSehat.Log_Token SET Payload = '$data', Deskripsi = '$response' WHERE access_token = '$GetToken->dataAccess'");
-                    echo json_encode($dataArr);
-                } else {
-                    // Handle non-200 status code
-                    $hasil = json_decode($data);
-                    $dataArr = array('Status' => 0, 'payload' => $hasil, 'access_token' => $GetToken->dataAccess, 'httpError' => $httpCode, "Posisi" => "4", "response" => json_decode($response));
-                    echo json_encode($dataArr);
-
-                    // echo "HTTP Error: Post Condition Secondary $httpCode\n";
-                    // echo "Response: $response\n";
-                    // echo "Payload: $data\n";
-                    die();
+                    ],
+                    "code": {
+                        "coding": [
+                            {
+                                "system": "http://hl7.org/fhir/sid/icd-10",
+                                "code": "'.$KodeICD10.'",
+                                "display": "'.$NamaICD10.'"
+                            }
+                        ]
+                    },
+                    "subject": {
+                        "reference": "Patient/'.$NikPasien.'",
+                        "display": "'.$NamaPasien.'"
+                    },
+                    "encounter": {
+                        "reference": "Encounter/'.$EncounterInprogres.'",
+                        "display": "'.$TextEncounter.'"
+                    },
+                    "onsetDateTime": "'.$DateRecord.'",
+                    "recordedDate": "'.$DateRecord.'"
                 }
+                ';
+    
+                // $json = json_encode($data, JSON_PRETTY_PRINT);
+                // echo $data;
+                // die();
+    
+                $url = "$GetToken->dataUrl/Condition";
+                $ch = curl_init($url);
+    
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+                curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+                    'Content-Type: application/json',
+                    'Authorization: Bearer ' . $GetToken->dataAccess
+                ));
+    
+                $response = curl_exec($ch);
+    
+                // Check for cURL errors
+                if (curl_errno($ch)) {
+                    echo 'Error: ' . curl_error($ch);
+                } else {
+                    // Check HTTP status code
+                    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                    if ($httpCode == 201 || $httpCode == 200) {
+                        // Decode and handle the response
+                        $dataCek = json_decode($response);
+                        $dataArr = array('ValReturn' => $dataCek, 'access_token' => $GetToken->dataAccess);
+                        $TokenContinue = array(
+                            'NoTrx' => uniqid(true).date("Y_m_d"),
+                            'access_token' => $GetToken->access_token,
+                            'client_id' => $GetToken->client_id,
+                            'expires_in' => $GetToken->expires_in,
+                            'CreateDate' => date("Y-m-d H:i:s"),
+                            'Deskripsi' => json_encode($dataCek, TRUE),
+                            'Payload' => $data,
+                            'TokenAkses' => "Post Condition Kedua"
+                        );
+                
+                        $this->db->insert('SatuSehat.Log_Token', $TokenContinue);
+                        $TempId = array(
+                            "NoTrx" => uniqid(true).date("_Y-m-d"),
+                            "NoRegis" => $NoRegistrasi,
+                            "ID_SatuSehat" => $dataCek->id,
+                            "Status" => "Conditon - Secondary",
+                            "CreateDate" => date("Y-m-d H:i:s"),
+                            "Token" => $GetToken->dataAccess
+                        );
+                        $this->db->insert("EMR.SatuSehat.Temp_ID", $TempId);
+                        $this->EncounterUpdateFinish($object, $IdInprogres, $IdKondisiPrimary, $dataCek->id, $IdEncounter, $GetToken);
+                        // $this->db->query("UPDATE EMR.SatuSehat.Log_Token SET Payload = '$data', Deskripsi = '$response' WHERE access_token = '$GetToken->dataAccess'");
+                        echo json_encode($dataArr);
+                    } else {
+                        // Handle non-200 status code
+                        $hasil = json_decode($data);
+                        $dataArr = array('Status' => 0, 'payload' => $hasil, 'access_token' => $GetToken->dataAccess, 'httpError' => $httpCode, "Posisi" => "4", "response" => json_decode($response));
+                        echo json_encode($dataArr);
+    
+                        // echo "HTTP Error: Post Condition Secondary $httpCode\n";
+                        // echo "Response: $response\n";
+                        // echo "Payload: $data\n";
+                        die();
+                    }
+                }
+    
+                curl_close($ch);
+            } else {
+                $this->EncounterUpdateFinish($object, $IdInprogres, $IdKondisiPrimary, $qCekTempId->ID_SatuSehat, $IdEncounter, $GetToken);
             }
-
-            curl_close($ch);
-        } else {
-            $this->EncounterUpdateFinish($object, $IdInprogres, $IdKondisiPrimary, $qCekTempId->ID_SatuSehat, $IdEncounter, $GetToken);
         }
+        
+
+        
     }
 
     public function EncounterUpdateFinish($object, $IdInprogres, $IdKondisiPrimary, $IdKondisiSecondary, $IdEncounter, $GetToken) 
@@ -1510,118 +1518,219 @@ class BackApi extends MY_Controller
             // $IdKondisiSecondary = $object->IdKondisiSecondary;
             $DeskripsiKondisiSecondary = $object->NamaICD10Secondary;
 
-            $data = '{
-                "resourceType": "Encounter",
-                "id": "'.$IdInprogres.'",
-                "identifier": [
-                    {
-                        "system": "http://sys-ids.kemkes.go.id/encounter/'.$GetToken->NoOrganisasi.'",
-                        "value": "'.$NoRegistrasi.'"
-                    }
-                ],
-                "status": "finished",
-                "class": {
-                    "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
-                    "code": "AMB",
-                    "display": "ambulatory"
-                },
-                "subject": {
-                    "reference": "Patient/'.$NikPasien.'",
-                    "display": "'.$NamaPasien.'"
-                },
-                "participant": [
-                    {
-                        "type": [
-                            {
+            if ($IdKondisiSecondary == null) {
+                $data = '{
+                    "resourceType": "Encounter",
+                    "id": "'.$IdInprogres.'",
+                    "identifier": [
+                        {
+                            "system": "http://sys-ids.kemkes.go.id/encounter/'.$GetToken->NoOrganisasi.'",
+                            "value": "'.$NoRegistrasi.'"
+                        }
+                    ],
+                    "status": "finished",
+                    "class": {
+                        "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+                        "code": "AMB",
+                        "display": "ambulatory"
+                    },
+                    "subject": {
+                        "reference": "Patient/'.$NikPasien.'",
+                        "display": "'.$NamaPasien.'"
+                    },
+                    "participant": [
+                        {
+                            "type": [
+                                {
+                                    "coding": [
+                                        {
+                                            "system": "http://terminology.hl7.org/CodeSystem/v3-ParticipationType",
+                                            "code": "ATND",
+                                            "display": "attender"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "individual": {
+                                "reference": "Practitioner/'.$NikDokter.'",
+                                "display": "'.$NamaDokter.'"
+                            }
+                        }
+                    ],
+                    "period": {
+                        "start": "'.$DateAwal.'",
+                        "end": "'.$DateAkhir.'"
+                    },
+                    "location": [
+                        {
+                            "location": {
+                                "reference": "Location/'.$IdLocation.'",
+                                "display": "'.$NamaLokasi.'"
+                            }
+                        }
+                    ],
+                    "diagnosis": [
+                        {
+                            "condition": {
+                                "reference": "Condition/'.$IdKondisiPrimary.'",
+                                "display": "'.$DeskripsiKondisiPrimary.'"
+                            },
+                            "use": {
                                 "coding": [
                                     {
-                                        "system": "http://terminology.hl7.org/CodeSystem/v3-ParticipationType",
-                                        "code": "ATND",
-                                        "display": "attender"
+                                        "system": "http://terminology.hl7.org/CodeSystem/diagnosis-role",
+                                        "code": "DD",
+                                        "display": "Discharge diagnosis"
                                     }
                                 ]
+                            },
+                            "rank": 1
+                        }
+                    ],
+                    "statusHistory": [
+                        {
+                            "status": "arrived",
+                            "period": {
+                                "start": "'.$DateAwal.'",
+                                "end": "'.$DateInprogres.'"
                             }
-                        ],
-                        "individual": {
-                            "reference": "Practitioner/'.$NikDokter.'",
-                            "display": "'.$NamaDokter.'"
-                        }
-                    }
-                ],
-                "period": {
-                    "start": "'.$DateAwal.'",
-                    "end": "'.$DateAkhir.'"
-                },
-                "location": [
-                    {
-                        "location": {
-                            "reference": "Location/'.$IdLocation.'",
-                            "display": "'.$NamaLokasi.'"
-                        }
-                    }
-                ],
-                "diagnosis": [
-                    {
-                        "condition": {
-                            "reference": "Condition/'.$IdKondisiPrimary.'",
-                            "display": "'.$DeskripsiKondisiPrimary.'"
                         },
-                        "use": {
-                            "coding": [
-                                {
-                                    "system": "http://terminology.hl7.org/CodeSystem/diagnosis-role",
-                                    "code": "DD",
-                                    "display": "Discharge diagnosis"
-                                }
-                            ]
+                        {
+                            "status": "in-progress",
+                            "period": {
+                                "start": "'.$DateInprogres.'",
+                                "end": "'.$DateAkhir.'"
+                            }
                         },
-                        "rank": 1
-                    },
-                    {
-                        "condition": {
-                            "reference": "Condition/'.$IdKondisiSecondary.'",
-                            "display": "'.$DeskripsiKondisiSecondary.'"
-                        },
-                        "use": {
-                            "coding": [
-                                {
-                                    "system": "http://terminology.hl7.org/CodeSystem/diagnosis-role",
-                                    "code": "DD",
-                                    "display": "Discharge diagnosis"
-                                }
-                            ]
-                        },
-                        "rank": 2
+                        {
+                            "status": "finished",
+                            "period": {
+                                "start": "'.$DateAkhir.'",
+                                "end": "'.$DateAkhir.'"
+                            }
+                        }
+                    ],
+                    "serviceProvider": {
+                        "reference": "Organization/'.$GetToken->NoOrganisasi.'"
                     }
-                ],
-                "statusHistory": [
-                    {
-                        "status": "arrived",
-                        "period": {
-                            "start": "'.$DateAwal.'",
-                            "end": "'.$DateInprogres.'"
-                        }
-                    },
-                    {
-                        "status": "in-progress",
-                        "period": {
-                            "start": "'.$DateInprogres.'",
-                            "end": "'.$DateAkhir.'"
-                        }
-                    },
-                    {
-                        "status": "finished",
-                        "period": {
-                            "start": "'.$DateAkhir.'",
-                            "end": "'.$DateAkhir.'"
-                        }
-                    }
-                ],
-                "serviceProvider": {
-                    "reference": "Organization/'.$GetToken->NoOrganisasi.'"
                 }
+                ';
+            }else{
+                $data = '{
+                    "resourceType": "Encounter",
+                    "id": "'.$IdInprogres.'",
+                    "identifier": [
+                        {
+                            "system": "http://sys-ids.kemkes.go.id/encounter/'.$GetToken->NoOrganisasi.'",
+                            "value": "'.$NoRegistrasi.'"
+                        }
+                    ],
+                    "status": "finished",
+                    "class": {
+                        "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+                        "code": "AMB",
+                        "display": "ambulatory"
+                    },
+                    "subject": {
+                        "reference": "Patient/'.$NikPasien.'",
+                        "display": "'.$NamaPasien.'"
+                    },
+                    "participant": [
+                        {
+                            "type": [
+                                {
+                                    "coding": [
+                                        {
+                                            "system": "http://terminology.hl7.org/CodeSystem/v3-ParticipationType",
+                                            "code": "ATND",
+                                            "display": "attender"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "individual": {
+                                "reference": "Practitioner/'.$NikDokter.'",
+                                "display": "'.$NamaDokter.'"
+                            }
+                        }
+                    ],
+                    "period": {
+                        "start": "'.$DateAwal.'",
+                        "end": "'.$DateAkhir.'"
+                    },
+                    "location": [
+                        {
+                            "location": {
+                                "reference": "Location/'.$IdLocation.'",
+                                "display": "'.$NamaLokasi.'"
+                            }
+                        }
+                    ],
+                    "diagnosis": [
+                        {
+                            "condition": {
+                                "reference": "Condition/'.$IdKondisiPrimary.'",
+                                "display": "'.$DeskripsiKondisiPrimary.'"
+                            },
+                            "use": {
+                                "coding": [
+                                    {
+                                        "system": "http://terminology.hl7.org/CodeSystem/diagnosis-role",
+                                        "code": "DD",
+                                        "display": "Discharge diagnosis"
+                                    }
+                                ]
+                            },
+                            "rank": 1
+                        },
+                        {
+                            "condition": {
+                                "reference": "Condition/'.$IdKondisiSecondary.'",
+                                "display": "'.$DeskripsiKondisiSecondary.'"
+                            },
+                            "use": {
+                                "coding": [
+                                    {
+                                        "system": "http://terminology.hl7.org/CodeSystem/diagnosis-role",
+                                        "code": "DD",
+                                        "display": "Discharge diagnosis"
+                                    }
+                                ]
+                            },
+                            "rank": 2
+                        }
+                    ],
+                    "statusHistory": [
+                        {
+                            "status": "arrived",
+                            "period": {
+                                "start": "'.$DateAwal.'",
+                                "end": "'.$DateInprogres.'"
+                            }
+                        },
+                        {
+                            "status": "in-progress",
+                            "period": {
+                                "start": "'.$DateInprogres.'",
+                                "end": "'.$DateAkhir.'"
+                            }
+                        },
+                        {
+                            "status": "finished",
+                            "period": {
+                                "start": "'.$DateAkhir.'",
+                                "end": "'.$DateAkhir.'"
+                            }
+                        }
+                    ],
+                    "serviceProvider": {
+                        "reference": "Organization/'.$GetToken->NoOrganisasi.'"
+                    }
+                }
+                ';
             }
-            ';
+
+            
 
             // $json = json_encode($data, JSON_PRETTY_PRINT);
             // echo $data;
