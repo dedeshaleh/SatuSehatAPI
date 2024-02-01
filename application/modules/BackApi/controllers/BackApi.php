@@ -216,19 +216,54 @@ class BackApi extends MY_Controller
 
         $response = curl_exec($ch);
         $dataCek = json_decode($response);
+        
 
         // Check for cURL errors
         if (curl_errno($ch)) {
             echo 'Error: ' . curl_error($ch);
         } else {
-            // Check HTTP status code
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            if ($httpCode == 200) {
-                // Decode and handle the response
-                $dataArr = array('status' => 1, 'Nik' => $NIK, 'url'=> $url, 'ValReturn' => $dataCek, 'access_token' => $dataAccess);
-                $IdCek = $dataCek->entry[0]->resource;
-                $NamaPasien = $dataCek->entry[0]->resource->name[0]->text;
-                $this->db->query("UPDATE DB_Master_Fix.dbo.Pasien SET ID_Satu_Sehat = '$IdCek->id', Nama_Pasien_SatuSehat = '$NamaPasien' WHERE ID_No = '$NIK'");
+            if ($dataCek->total > 0) {
+                // Check HTTP status code
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                if ($httpCode == 200) {
+                    // Decode and handle the response
+                    $dataArr = array('message' => "Berhasil Update", 'status' => 1, 'Nik' => $NIK, 'url'=> $url, 'ValReturn' => $dataCek, 'access_token' => $dataAccess);
+                    $IdCek = $dataCek->entry[0]->resource;
+                    $NamaPasien = $dataCek->entry[0]->resource->name[0]->text;
+                    $this->db->query("UPDATE DB_Master_Fix.dbo.Pasien SET ID_Satu_Sehat = '$IdCek->id', Nama_Pasien_SatuSehat = '$NamaPasien' WHERE ID_No = '$NIK'");
+                    $dataToken = array(
+                        'NoTrx' => uniqid(true).date("Y_m_d"),
+                        'access_token' => $dataCek->access_token,
+                        'client_id' => $dataCek->client_id,
+                        'expires_in' => $dataCek->expires_in,
+                        'CreateDate' => date("Y-m-d H:i:s"),
+                        'Deskripsi' => json_encode($dataCek, TRUE),
+                        'payload' => json_encode($data, TRUE),
+                        'TokenAkses' => "Get Pasien NIK"
+                    );
+            
+                    $this->db->insert('SatuSehat.Log_Token', $dataToken);
+                    echo json_encode($dataArr);
+                } else {
+                    // Handle non-200 status code
+                    // echo "HTTP Error: $httpCode\n";
+                    // echo "Response: $response\n";
+                    $dataToken = array(
+                        'NoTrx' => uniqid(true).date("Y_m_d"),
+                        'access_token' => $dataCek->access_token,
+                        'client_id' => $dataCek->client_id,
+                        'expires_in' => $dataCek->expires_in,
+                        'CreateDate' => date("Y-m-d H:i:s"),
+                        'Deskripsi' => json_encode($dataCek, TRUE),
+                        'payload' => json_encode($data, TRUE),
+                        'TokenAkses' => "Get Pasien NIK"
+                    );
+                    $this->db->insert('SatuSehat.Log_Token', $dataToken);
+                    $dataArr = array('message' => "Gagal Response", 'status' => 0, 'Nik' => $NIK, 'url'=> $url, 'ValReturn' => $dataCek, 'access_token' => $dataAccess);
+            
+                }
+            } else {
+                $dataArr = array('message' => "Data Tidak Ditemukan",'status' => 0, 'Nik' => $NIK, 'url'=> $url, 'ValReturn' => $dataCek, 'access_token' => $dataAccess);
                 $dataToken = array(
                     'NoTrx' => uniqid(true).date("Y_m_d"),
                     'access_token' => $dataCek->access_token,
@@ -242,24 +277,9 @@ class BackApi extends MY_Controller
         
                 $this->db->insert('SatuSehat.Log_Token', $dataToken);
                 echo json_encode($dataArr);
-            } else {
-                // Handle non-200 status code
-                // echo "HTTP Error: $httpCode\n";
-                // echo "Response: $response\n";
-                $dataToken = array(
-                    'NoTrx' => uniqid(true).date("Y_m_d"),
-                    'access_token' => $dataCek->access_token,
-                    'client_id' => $dataCek->client_id,
-                    'expires_in' => $dataCek->expires_in,
-                    'CreateDate' => date("Y-m-d H:i:s"),
-                    'Deskripsi' => json_encode($dataCek, TRUE),
-                    'payload' => json_encode($data, TRUE),
-                    'TokenAkses' => "Get Pasien NIK"
-                );
-                $this->db->insert('SatuSehat.Log_Token', $dataToken);
-                $dataArr = array('status' => 0, 'Nik' => $NIK, 'url'=> $url, 'ValReturn' => $dataCek, 'access_token' => $dataAccess);
-        
+                
             }
+            
         }
 
         curl_close($ch);
@@ -408,46 +428,65 @@ class BackApi extends MY_Controller
         if (curl_errno($ch)) {
             echo 'Error: ' . curl_error($ch);
         } else {
-            // Check HTTP status code
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            if ($httpCode == 200) {
-                // Decode and handle the response
-                $dataCek = json_decode($response);
-                $dataArr = array('status' => 1,'ValReturn' => $dataCek, 'access_token' => $dataAccess);
-                // $IdDokter = $dataCek['entry'];
-                $IdCek = $dataCek->entry[0]->resource;
-                $NamaDokter = $dataCek->entry[0]->resource->name[0]->text;
-                $this->db->query("UPDATE DB_Master_Fix.dbo.Dokter SET ID_Satu_Sehat = '$IdCek->id', Nama_Dr_Satu_Sehat = '$NamaDokter' WHERE No_KTP = '$NIK'");
-                echo json_encode($dataArr);
-                $dataToken = array(
-                    'NoTrx' => uniqid(true).date("Y_m_d"),
-                    'access_token' => $dataCek->access_token,
-                    'client_id' => $dataCek->client_id,
-                    'expires_in' => $dataCek->expires_in,
-                    'CreateDate' => date("Y-m-d H:i:s"),
-                    'Deskripsi' => json_encode($dataCek, TRUE),
-                    'payload' => json_encode($data, TRUE),
-                    'TokenAkses' => "Get Pasien NIK"
-                );
-                $this->db->insert('SatuSehat.Log_Token', $dataToken);
+            
+            if ($dataCek->total > 0) {
+                // Check HTTP status code
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                if ($httpCode == 200) {
+                    // Decode and handle the response
+                    $dataCek = json_decode($response);
+                    $dataArr = array('message' => "Data Berhasil Di Update", 'status' => 1,'ValReturn' => $dataCek, 'access_token' => $dataAccess);
+                    // $IdDokter = $dataCek['entry'];
+                    $IdCek = $dataCek->entry[0]->resource;
+                    $NamaDokter = $dataCek->entry[0]->resource->name[0]->text;
+                    $this->db->query("UPDATE DB_Master_Fix.dbo.Dokter SET ID_Satu_Sehat = '$IdCek->id', Nama_Dr_Satu_Sehat = '$NamaDokter' WHERE No_KTP = '$NIK'");
+                    echo json_encode($dataArr);
+                    $dataToken = array(
+                        'NoTrx' => uniqid(true).date("Y_m_d"),
+                        'access_token' => $dataCek->access_token,
+                        'client_id' => $dataCek->client_id,
+                        'expires_in' => $dataCek->expires_in,
+                        'CreateDate' => date("Y-m-d H:i:s"),
+                        'Deskripsi' => json_encode($dataCek, TRUE),
+                        'payload' => json_encode($data, TRUE),
+                        'TokenAkses' => "Get Pasien NIK"
+                    );
+                    $this->db->insert('SatuSehat.Log_Token', $dataToken);
+                } else {
+                    // Handle non-200 status code
+                    // echo "HTTP Error: $httpCode\n";
+                    $dataArr = array('message' => "Data Gagal Di Update", 'status' => 0,'ValReturn' => $dataCek, 'access_token' => $dataAccess);
+                    echo json_encode($dataArr);
+                    // echo "Response: $response\n";
+                    $dataToken = array(
+                        'NoTrx' => uniqid(true).date("Y_m_d"),
+                        'access_token' => $dataCek->access_token,
+                        'client_id' => $dataCek->client_id,
+                        'expires_in' => $dataCek->expires_in,
+                        'CreateDate' => date("Y-m-d H:i:s"),
+                        'Deskripsi' => json_encode($dataCek, TRUE),
+                        'payload' => json_encode($data, TRUE),
+                        'TokenAkses' => "Get Pasien NIK"
+                    );
+                    $this->db->insert('SatuSehat.Log_Token', $dataToken);
+                }
             } else {
-                // Handle non-200 status code
-                // echo "HTTP Error: $httpCode\n";
-                $dataArr = array('status' => 0,'ValReturn' => $dataCek, 'access_token' => $dataAccess);
-                echo json_encode($dataArr);
-                // echo "Response: $response\n";
-                $dataToken = array(
-                    'NoTrx' => uniqid(true).date("Y_m_d"),
-                    'access_token' => $dataCek->access_token,
-                    'client_id' => $dataCek->client_id,
-                    'expires_in' => $dataCek->expires_in,
-                    'CreateDate' => date("Y-m-d H:i:s"),
-                    'Deskripsi' => json_encode($dataCek, TRUE),
-                    'payload' => json_encode($data, TRUE),
-                    'TokenAkses' => "Get Pasien NIK"
-                );
-                $this->db->insert('SatuSehat.Log_Token', $dataToken);
+                $dataArr = array('message' => "Data Tidak Ditemukan",'status' => 0,'ValReturn' => $dataCek, 'access_token' => $dataAccess);
+                    echo json_encode($dataArr);
+                    // echo "Response: $response\n";
+                    $dataToken = array(
+                        'NoTrx' => uniqid(true).date("Y_m_d"),
+                        'access_token' => $dataCek->access_token,
+                        'client_id' => $dataCek->client_id,
+                        'expires_in' => $dataCek->expires_in,
+                        'CreateDate' => date("Y-m-d H:i:s"),
+                        'Deskripsi' => json_encode($dataCek, TRUE),
+                        'payload' => json_encode($data, TRUE),
+                        'TokenAkses' => "Get Pasien NIK"
+                    );
+                    $this->db->insert('SatuSehat.Log_Token', $dataToken);
             }
+            
         }
 
         curl_close($ch);
